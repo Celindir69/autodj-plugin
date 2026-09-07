@@ -2,6 +2,7 @@
 
 var libQ = require('kew');
 var fs = require('fs-extra');
+var path = require('path');
 var execFile = require('child_process').execFile;
 
 module.exports = ControllerAutoDJ;
@@ -24,6 +25,18 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   var self = this;
 
   var configFile = self.commandRouter.pluginManager.getConfigurationFile(self.context, 'config.json');
+
+  // v-conf's own save() (fs.writeJson, no callback - see its index.js)
+  // fails silently with ENOENT if the config directory doesn't exist yet,
+  // and swallows the error rather than throwing - on a brand new install
+  // this directory has never been created, so every settings save was a
+  // silent no-op: the in-memory value took effect immediately (masking
+  // the problem, since behavior for the current session looked correct),
+  // but nothing ever reached disk, so a reboot reverted everything to
+  // defaults. Ensuring the directory exists up front avoids this
+  // regardless of whether v-conf itself gets fixed upstream.
+  fs.ensureDirSync(path.dirname(configFile));
+
   self.config = new (require('v-conf'))();
   self.config.loadFile(configFile);
 
