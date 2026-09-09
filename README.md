@@ -12,8 +12,9 @@ Continuous Play**):
 - **Enabled** - on/off switch.
 - **Check interval (seconds)** - how often to check the queue.
 - **Last.fm API key** - free, from https://www.last.fm/api/account/create.
-- **Repeat guard size** - how many recently-used artists to remember and
-  avoid repeating right away.
+- **Artist repeat guard size** - how many recently-used artists to
+  remember and avoid repeating right away (the exact same track is
+  separately guarded for longer - see the volumio-autodj README).
 
 It still needs SSH access for the one-time install (Volumio has no
 "install from a private/local zip" button in the UI), but no SSH - or

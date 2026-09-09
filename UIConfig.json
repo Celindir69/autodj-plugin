@@ -20,7 +20,7 @@
 					"enabled",
 					"intervalSeconds",
 					"lastfmApiKey",
-					"historySize"
+					"artistHistorySize"
 				]
 			},
 			"content": [
@@ -48,12 +48,12 @@
 					"value": ""
 				},
 				{
-					"id": "historySize",
+					"id": "artistHistorySize",
 					"element": "input",
 					"type": "text",
-					"label": "Repeat guard size",
-					"doc": "How many recently-used artists to remember and avoid repeating right away. If none of the similar artists found for the current track are outside this list, the guard is overridden rather than letting the queue run dry.",
-					"value": "15"
+					"label": "Artist repeat guard size",
+					"doc": "How many recently-used artists to remember and avoid repeating right away. If none of the similar artists found for the current track are outside this list, the guard is overridden rather than letting the queue run dry. The exact same TRACK is separately guarded for longer (15 additions), regardless of this setting - see the volumio-autodj README.",
+					"value": "4"
 				}
 			]
 		}

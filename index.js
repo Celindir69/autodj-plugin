@@ -44,7 +44,7 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   // missing-file behavior, so a fresh install always has sane values.
   if (self.config.get('enabled') === undefined) self.config.set('enabled', false);
   if (self.config.get('intervalSeconds') === undefined) self.config.set('intervalSeconds', 90);
-  if (self.config.get('historySize') === undefined) self.config.set('historySize', 15);
+  if (self.config.get('artistHistorySize') === undefined) self.config.set('artistHistorySize', 4);
   if (self.config.get('lastfmApiKey') === undefined) self.config.set('lastfmApiKey', '');
 
   return libQ.resolve();
@@ -84,7 +84,7 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[0].value = self.config.get('enabled');
   uiconf.sections[0].content[1].value = String(self.config.get('intervalSeconds'));
   uiconf.sections[0].content[2].value = self.config.get('lastfmApiKey');
-  uiconf.sections[0].content[3].value = String(self.config.get('historySize'));
+  uiconf.sections[0].content[3].value = String(self.config.get('artistHistorySize'));
 
   defer.resolve(uiconf);
   return defer.promise;
@@ -101,9 +101,9 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
     return defer.promise;
   }
 
-  var historySize = parseInt(data['historySize'], 10);
-  if (isNaN(historySize) || historySize < 1) {
-    self.commandRouter.pushToastMessage('error', 'AutoDJ', 'Repeat guard size must be a positive number.');
+  var artistHistorySize = parseInt(data['artistHistorySize'], 10);
+  if (isNaN(artistHistorySize) || artistHistorySize < 1) {
+    self.commandRouter.pushToastMessage('error', 'AutoDJ', 'Artist repeat guard size must be a positive number.');
     defer.resolve({});
     return defer.promise;
   }
@@ -119,7 +119,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('enabled', enabled);
   self.config.set('intervalSeconds', intervalSeconds);
   self.config.set('lastfmApiKey', lastfmApiKey);
-  self.config.set('historySize', historySize);
+  self.config.set('artistHistorySize', artistHistorySize);
 
   if (enabled) {
     self.startTimer();
@@ -178,7 +178,7 @@ ControllerAutoDJ.prototype.runTick = function () {
   var env = Object.assign({}, process.env, {
     VOLUMIO_HOST: 'localhost',
     LASTFM_API_KEY: lastfmApiKey,
-    HISTORY_SIZE: String(self.config.get('historySize') || 15)
+    ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4)
   });
 
   execFile('/bin/bash', [scriptPath], { env: env, timeout: 45000 }, function (error, stdout, stderr) {
