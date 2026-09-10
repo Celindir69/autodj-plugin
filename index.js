@@ -46,6 +46,7 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   if (self.config.get('intervalSeconds') === undefined) self.config.set('intervalSeconds', 90);
   if (self.config.get('artistHistorySize') === undefined) self.config.set('artistHistorySize', 4);
   if (self.config.get('lastfmApiKey') === undefined) self.config.set('lastfmApiKey', '');
+  if (self.config.get('autoReplayGain') === undefined) self.config.set('autoReplayGain', false);
 
   return libQ.resolve();
 };
@@ -85,6 +86,7 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[1].value = String(self.config.get('intervalSeconds'));
   uiconf.sections[0].content[2].value = self.config.get('lastfmApiKey');
   uiconf.sections[0].content[3].value = String(self.config.get('artistHistorySize'));
+  uiconf.sections[0].content[4].value = self.config.get('autoReplayGain');
 
   defer.resolve(uiconf);
   return defer.promise;
@@ -110,6 +112,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
 
   var enabled = !!data['enabled'];
   var lastfmApiKey = (data['lastfmApiKey'] || '').trim();
+  var autoReplayGain = !!data['autoReplayGain'];
 
   if (enabled && !lastfmApiKey) {
     self.commandRouter.pushToastMessage('error', 'AutoDJ', 'A Last.fm API key is required to enable AutoDJ.');
@@ -120,6 +123,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('intervalSeconds', intervalSeconds);
   self.config.set('lastfmApiKey', lastfmApiKey);
   self.config.set('artistHistorySize', artistHistorySize);
+  self.config.set('autoReplayGain', autoReplayGain);
 
   if (enabled) {
     self.startTimer();
@@ -178,7 +182,8 @@ ControllerAutoDJ.prototype.runTick = function () {
   var env = Object.assign({}, process.env, {
     VOLUMIO_HOST: 'localhost',
     LASTFM_API_KEY: lastfmApiKey,
-    ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4)
+    ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4),
+    AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off'
   });
 
   execFile('/bin/bash', [scriptPath], { env: env, timeout: 45000 }, function (error, stdout, stderr) {

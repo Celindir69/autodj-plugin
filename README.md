@@ -15,6 +15,11 @@ Continuous Play**):
 - **Artist repeat guard size** - how many recently-used artists to
   remember and avoid repeating right away (the exact same track is
   separately guarded for longer - see the volumio-autodj README).
+- **Auto volume normalization** - off by default. When on, turns
+  Volumio's volume normalization on once AutoDJ starts mixing artists
+  into the queue, and back off at the next freshly-started queue -
+  respecting any manual change you make in the meantime. See "Volume
+  normalization" in the volumio-autodj README for the full behavior.
 
 It still needs SSH access for the one-time install (Volumio has no
 "install from a private/local zip" button in the UI), but no SSH - or

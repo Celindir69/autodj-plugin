@@ -20,7 +20,8 @@
 					"enabled",
 					"intervalSeconds",
 					"lastfmApiKey",
-					"artistHistorySize"
+					"artistHistorySize",
+					"autoReplayGain"
 				]
 			},
 			"content": [
@@ -54,6 +55,13 @@
 					"label": "Artist repeat guard size",
 					"doc": "How many recently-used artists to remember and avoid repeating right away. If none of the similar artists found for the current track are outside this list, the guard is overridden rather than letting the queue run dry. The exact same TRACK is separately guarded for longer (15 additions), regardless of this setting - see the volumio-autodj README.",
 					"value": "4"
+				},
+				{
+					"id": "autoReplayGain",
+					"element": "switch",
+					"label": "Auto volume normalization",
+					"description": "Turns Volumio's volume normalization on once AutoDJ starts mixing artists into the queue, and back off at the next freshly-started queue. Off by default - leave off if you manage this setting yourself. If you change it manually while AutoDJ is running, that change is respected until the next fresh queue.",
+					"value": false
 				}
 			]
 		}
