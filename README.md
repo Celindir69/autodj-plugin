@@ -16,14 +16,16 @@ Continuous Play**):
   remember and avoid repeating right away (the exact same track is
   separately guarded for longer - see the volumio-autodj README).
 - **Auto volume normalization** - off by default. When on, turns
-  Volumio's volume normalization on once AutoDJ starts mixing artists
-  into the queue, and back off at the next freshly-started queue -
-  respecting any manual change you make in the meantime. See "Volume
-  normalization" in the volumio-autodj README for the full behavior.
+  Volumio's volume normalization on once playback actually reaches the
+  first AutoDJ-mixed track (not merely once AutoDJ appends it - the
+  tail of a curated album/playlist you queued yourself is never affected),
+  and back off at the next freshly-started queue - respecting any manual
+  change you make in the meantime. See "Volume normalization" in the
+  volumio-autodj README for the full behavior.
 - **Auto crossfade (seconds)** - empty/off by default. Same on/off
-  behavior as Auto volume normalization above, for MPD's crossfade
-  instead - enter a number of seconds to enable it. See "Crossfade" in
-  the volumio-autodj README for the full behavior.
+  behavior and timing as Auto volume normalization above, for MPD's
+  crossfade instead - enter a number of seconds to enable it. See
+  "Crossfade" in the volumio-autodj README for the full behavior.
 
 It still needs SSH access for the one-time install (Volumio has no
 "install from a private/local zip" button in the UI), but no SSH - or
