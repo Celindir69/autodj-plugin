@@ -4,8 +4,11 @@ A [Volumio](https://volumio.org/) plugin that keeps the play queue topped
 up automatically: once the queue is about to run out, it appends a track
 by an artist similar to what's currently playing (via the
 [Last.fm](https://www.last.fm/api/account/create) API), matched against
-your local library - a settings page in the Volumio UI instead of
-managing cron/systemd and environment variables by hand.
+your local library (and automatically against Tidal too, if you have it
+set up as a Volumio source and the artist isn't found locally - see
+"Tidal fallback" in the volumio-autodj README) - a settings page in the
+Volumio UI instead of managing cron/systemd and environment variables by
+hand.
 
 Settings page (**Settings → Plugins → Installed Plugins → AutoDJ -
 Continuous Play**):
