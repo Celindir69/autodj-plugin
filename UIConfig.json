@@ -21,7 +21,8 @@
 					"intervalSeconds",
 					"lastfmApiKey",
 					"artistHistorySize",
-					"autoReplayGain"
+					"autoReplayGain",
+					"autoCrossfadeSeconds"
 				]
 			},
 			"content": [
@@ -62,6 +63,14 @@
 					"label": "Auto volume normalization",
 					"description": "Turns Volumio's volume normalization on once AutoDJ starts mixing artists into the queue, and back off at the next freshly-started queue. Off by default - leave off if you manage this setting yourself. If you change it manually while AutoDJ is running, that change is respected until the next fresh queue.",
 					"value": false
+				},
+				{
+					"id": "autoCrossfadeSeconds",
+					"element": "input",
+					"type": "text",
+					"label": "Auto crossfade (seconds)",
+					"doc": "Turns MPD's crossfade on with this many seconds once AutoDJ starts mixing artists into the queue, and back off (0) at the next freshly-started queue - same on/off behavior as Auto volume normalization above, including respecting a manual change until the next fresh queue. Leave empty to disable (default) and manage crossfade yourself.",
+					"value": ""
 				}
 			]
 		}

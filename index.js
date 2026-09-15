@@ -47,6 +47,7 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   if (self.config.get('artistHistorySize') === undefined) self.config.set('artistHistorySize', 4);
   if (self.config.get('lastfmApiKey') === undefined) self.config.set('lastfmApiKey', '');
   if (self.config.get('autoReplayGain') === undefined) self.config.set('autoReplayGain', false);
+  if (self.config.get('autoCrossfadeSeconds') === undefined) self.config.set('autoCrossfadeSeconds', '');
 
   return libQ.resolve();
 };
@@ -87,6 +88,7 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[2].value = self.config.get('lastfmApiKey');
   uiconf.sections[0].content[3].value = String(self.config.get('artistHistorySize'));
   uiconf.sections[0].content[4].value = self.config.get('autoReplayGain');
+  uiconf.sections[0].content[5].value = String(self.config.get('autoCrossfadeSeconds'));
 
   defer.resolve(uiconf);
   return defer.promise;
@@ -110,6 +112,21 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
     return defer.promise;
   }
 
+  // Empty means "off" (default) - only validated as a number when
+  // actually set, same off-by-default spirit as autoReplayGain but with
+  // a value to carry (the crossfade duration) instead of a plain switch.
+  var autoCrossfadeSecondsRaw = (data['autoCrossfadeSeconds'] || '').trim();
+  var autoCrossfadeSeconds = '';
+  if (autoCrossfadeSecondsRaw !== '') {
+    var crossfadeNum = parseInt(autoCrossfadeSecondsRaw, 10);
+    if (isNaN(crossfadeNum) || crossfadeNum < 0 || String(crossfadeNum) !== autoCrossfadeSecondsRaw) {
+      self.commandRouter.pushToastMessage('error', 'AutoDJ', 'Auto crossfade must be empty (off) or a whole number of seconds.');
+      defer.resolve({});
+      return defer.promise;
+    }
+    autoCrossfadeSeconds = String(crossfadeNum);
+  }
+
   var enabled = !!data['enabled'];
   var lastfmApiKey = (data['lastfmApiKey'] || '').trim();
   var autoReplayGain = !!data['autoReplayGain'];
@@ -124,6 +141,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('lastfmApiKey', lastfmApiKey);
   self.config.set('artistHistorySize', artistHistorySize);
   self.config.set('autoReplayGain', autoReplayGain);
+  self.config.set('autoCrossfadeSeconds', autoCrossfadeSeconds);
 
   if (enabled) {
     self.startTimer();
@@ -183,7 +201,8 @@ ControllerAutoDJ.prototype.runTick = function () {
     VOLUMIO_HOST: 'localhost',
     LASTFM_API_KEY: lastfmApiKey,
     ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4),
-    AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off'
+    AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off',
+    AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off'
   });
 
   execFile('/bin/bash', [scriptPath], { env: env, timeout: 45000 }, function (error, stdout, stderr) {

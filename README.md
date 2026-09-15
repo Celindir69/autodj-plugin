@@ -20,6 +20,10 @@ Continuous Play**):
   into the queue, and back off at the next freshly-started queue -
   respecting any manual change you make in the meantime. See "Volume
   normalization" in the volumio-autodj README for the full behavior.
+- **Auto crossfade (seconds)** - empty/off by default. Same on/off
+  behavior as Auto volume normalization above, for MPD's crossfade
+  instead - enter a number of seconds to enable it. See "Crossfade" in
+  the volumio-autodj README for the full behavior.
 
 It still needs SSH access for the one-time install (Volumio has no
 "install from a private/local zip" button in the UI), but no SSH - or
