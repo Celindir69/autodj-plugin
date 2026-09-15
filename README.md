@@ -27,6 +27,15 @@ Continuous Play**):
   crossfade instead - enter a number of seconds to enable it. See
   "Crossfade" in the volumio-autodj README for the full behavior.
 
+Whenever either of the above is on, the plugin also runs a small background
+watcher alongside its main timer - a separate, much more frequent check
+(every few seconds, not every `intervalSeconds`) purely to catch the exact
+moment playback reaches the mixed-in content, so replay gain/crossfade
+switch on right at that track change instead of landing mid-song on
+whichever tick happens to run next. Fully automatic: started/stopped along
+with "Enabled", no separate setting. See "Avoiding a mid-song volume jump"
+in the volumio-autodj README for how it works.
+
 It still needs SSH access for the one-time install (Volumio has no
 "install from a private/local zip" button in the UI), but no SSH - or
 terminal at all - for day-to-day use afterwards: the plugin runs its own
