@@ -76,6 +76,15 @@ Then open **Settings → Plugins → Installed Plugins → AutoDJ - Continuous
 Play** in the Volumio UI, enter your Last.fm API key, adjust the interval/
 repeat-guard size if you like, and switch it on.
 
+### Installing on Volumio 2 / OEM devices
+
+On some Volumio 2 OEM builds (confirmed on a Musical Fidelity MX-Stream),
+`volumio plugin install` hangs forever with no error and no log output, for
+reasons unrelated to this plugin's own code. See
+[`docs/volumio2-mxstream-install.md`](docs/volumio2-mxstream-install.md) for
+what's actually happening and a working install script
+(`scripts/install-mxstream.sh`) that bypasses it.
+
 ## Logs
 
 Plugin logs appear in Volumio's own plugin log (`journalctl -u volumio -f`
