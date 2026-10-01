@@ -9,6 +9,7 @@ set up as a Volumio source and the artist isn't found locally - see
 "Tidal fallback" in the volumio-autodj README) - a settings page in the
 Volumio UI instead of managing cron/systemd and environment variables by
 hand.
+Developed using AI (Claude code https://claude.ai)
 
 Settings page (**Settings → Plugins → Installed Plugins → AutoDJ -
 Continuous Play**):
