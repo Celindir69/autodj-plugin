@@ -51,6 +51,7 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   if (self.config.get('lastfmApiKey') === undefined) self.config.set('lastfmApiKey', '');
   if (self.config.get('autoReplayGain') === undefined) self.config.set('autoReplayGain', false);
   if (self.config.get('autoCrossfadeSeconds') === undefined) self.config.set('autoCrossfadeSeconds', '');
+  if (self.config.get('excludeKeywords') === undefined) self.config.set('excludeKeywords', '');
 
   return libQ.resolve();
 };
@@ -92,6 +93,7 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[3].value = String(self.config.get('artistHistorySize'));
   uiconf.sections[0].content[4].value = self.config.get('autoReplayGain');
   uiconf.sections[0].content[5].value = String(self.config.get('autoCrossfadeSeconds'));
+  uiconf.sections[0].content[6].value = String(self.config.get('excludeKeywords'));
 
   defer.resolve(uiconf);
   return defer.promise;
@@ -133,6 +135,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   var enabled = !!data['enabled'];
   var lastfmApiKey = (data['lastfmApiKey'] || '').trim();
   var autoReplayGain = !!data['autoReplayGain'];
+  var excludeKeywords = (data['excludeKeywords'] || '').trim();
 
   if (enabled && !lastfmApiKey) {
     self.commandRouter.pushToastMessage('error', 'AutoDJ', 'A Last.fm API key is required to enable AutoDJ.');
@@ -145,6 +148,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('artistHistorySize', artistHistorySize);
   self.config.set('autoReplayGain', autoReplayGain);
   self.config.set('autoCrossfadeSeconds', autoCrossfadeSeconds);
+  self.config.set('excludeKeywords', excludeKeywords);
 
   if (enabled) {
     self.startTimer();
@@ -283,7 +287,8 @@ ControllerAutoDJ.prototype.runTick = function () {
     LASTFM_API_KEY: lastfmApiKey,
     ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4),
     AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off',
-    AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off'
+    AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off',
+    EXCLUDE_KEYWORDS: self.config.get('excludeKeywords') || ''
   });
 
   execFile('/bin/bash', [scriptPath], { env: env, timeout: 45000 }, function (error, stdout, stderr) {

@@ -31,6 +31,13 @@ Continuous Play**):
   behavior and timing as Auto volume normalization above, for MPD's
   crossfade instead - enter a number of seconds to enable it. See
   "Crossfade" in the volumio-autodj README for the full behavior.
+- **Exclude keywords** - empty by default. Semicolon-separated words/
+  phrases (e.g. `Live;Tubular Bells;Ommadawn`) - any candidate track whose
+  title OR album contains one of these, case-insensitively, is skipped
+  entirely. Handy for keeping live recordings or specific long-form albums
+  out of the mix. Plain substring match, not a full filter - a short word
+  can have false positives (`Live` also matches an album called `Olive
+  Grove`).
 
 Whenever either of the above is on, the plugin also runs a small background
 watcher alongside its main timer - a separate, much more frequent check

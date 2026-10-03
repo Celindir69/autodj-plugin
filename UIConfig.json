@@ -22,7 +22,8 @@
 					"lastfmApiKey",
 					"artistHistorySize",
 					"autoReplayGain",
-					"autoCrossfadeSeconds"
+					"autoCrossfadeSeconds",
+					"excludeKeywords"
 				]
 			},
 			"content": [
@@ -70,6 +71,14 @@
 					"type": "text",
 					"label": "Auto crossfade (seconds)",
 					"doc": "Turns MPD's crossfade on with this many seconds once AutoDJ starts mixing artists into the queue, and back off (0) at the next freshly-started queue - same on/off behavior as Auto volume normalization above, including respecting a manual change until the next fresh queue. Leave empty to disable (default) and manage crossfade yourself.",
+					"value": ""
+				},
+				{
+					"id": "excludeKeywords",
+					"element": "input",
+					"type": "text",
+					"label": "Exclude keywords",
+					"doc": "Semicolon-separated words/phrases, e.g. \"Live;Tubular Bells;Ommadawn\" - any candidate track whose title OR album contains one of these, case-insensitively, is skipped entirely. Handy for keeping live recordings or specific long-form albums out of the mix. Plain substring match, not a full filter - a short word can have false positives (\"Live\" also matches an album called \"Olive Grove\"). Leave empty to disable (default).",
 					"value": ""
 				}
 			]
