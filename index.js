@@ -291,7 +291,12 @@ ControllerAutoDJ.prototype.runTick = function () {
     EXCLUDE_KEYWORDS: self.config.get('excludeKeywords') || ''
   });
 
-  execFile('/bin/bash', [scriptPath], { env: env, timeout: 45000 }, function (error, stdout, stderr) {
+  // Backstop on top of the script's own SEARCH_DEADLINE_SECONDS budget
+  // (25s, bounding the candidate/Tidal-fallback search) - leaves headroom
+  // for the rest of the run (initial Last.fm call, MPD queries,
+  // addToQueue, history writes, replay gain/crossfade sync), which should
+  // normally finish within a few seconds on top of that budget.
+  execFile('/bin/bash', [scriptPath], { env: env, timeout: 60000 }, function (error, stdout, stderr) {
     if (stderr) {
       // The script logs its own timestamped lines to stderr (as well as
       // its own debug log file under /data/volumio_autodj_data/) - surface
