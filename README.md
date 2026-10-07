@@ -47,8 +47,9 @@ Continuous Play**):
   Volumio's Spotify plugin with search (Spotify Connect alone has none).
   Turn all four off for local library only.
 
-Whenever either of the above is on, the plugin also runs a small background
-watcher alongside its main timer - a separate, much more frequent check
+Whenever either of the replay gain/crossfade switch is on, the plugin 
+also runs a small background watcher alongside its main timer
+ - a separate, much more frequent check
 (every few seconds, not every `intervalSeconds`) purely to catch the exact
 moment playback reaches the mixed-in content, so replay gain/crossfade
 switch on right at that track change instead of landing mid-song on
