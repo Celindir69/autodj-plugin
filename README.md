@@ -4,9 +4,10 @@ A [Volumio](https://volumio.org/) plugin that keeps the play queue topped
 up automatically: once the queue is about to run out, it appends a track
 by an artist similar to what's currently playing (via the
 [Last.fm](https://www.last.fm/api/account/create) API), matched against
-your local library (and automatically against Tidal too, if you have it
-set up as a Volumio source and the artist isn't found locally - see
-"Tidal fallback" in the volumio-autodj README) - a settings page in the
+your local library (and, if the artist isn't found locally, against
+TIDAL, Qobuz, HIGHRESAUDIO or Spotify too, whichever you have set up as a
+Volumio source - see "Streaming fallback" in the volumio-autodj README) -
+a settings page in the
 Volumio UI instead of managing cron/systemd and environment variables by
 hand.
 
@@ -38,6 +39,13 @@ Continuous Play**):
   out of the mix. Plain substring match, not a full filter - a short word
   can have false positives (`Live` also matches an album called `Olive
   Grove`).
+- **Use TIDAL / Use Qobuz / Use HIGHRESAUDIO / Use Spotify** - all on by
+  default. For an artist that isn't in your local library, also look for
+  their tracks on that service; each only has an effect if the service is
+  set up in Volumio, and a local match always wins. If several services
+  have the artist, the first one in this order is used. Spotify needs
+  Volumio's Spotify plugin with search (Spotify Connect alone has none).
+  Turn all four off for local library only.
 
 Whenever either of the above is on, the plugin also runs a small background
 watcher alongside its main timer - a separate, much more frequent check
