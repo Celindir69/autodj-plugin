@@ -8,6 +8,16 @@ var spawn = require('child_process').spawn;
 
 module.exports = ControllerAutoDJ;
 
+// Streaming services AutoDJ may fall back to for an artist that isn't in
+// the local library: settings key -> Volumio "service" names in search
+// results. Each only ever matters if that service is set up in Volumio.
+var STREAMS = [
+  { key: 'useTidal', services: 'tidal' },
+  { key: 'useQobuz', services: 'qobuz' },
+  { key: 'useHra', services: 'hra highresaudio' },
+  { key: 'useSpotify', services: 'spop spotify' }
+];
+
 function ControllerAutoDJ(context) {
   var self = this;
 
@@ -52,6 +62,9 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   if (self.config.get('autoReplayGain') === undefined) self.config.set('autoReplayGain', false);
   if (self.config.get('autoCrossfadeSeconds') === undefined) self.config.set('autoCrossfadeSeconds', '');
   if (self.config.get('excludeKeywords') === undefined) self.config.set('excludeKeywords', '');
+  STREAMS.forEach(function (s) {
+    if (self.config.get(s.key) === undefined) self.config.set(s.key, true);
+  });
 
   return libQ.resolve();
 };
@@ -94,6 +107,9 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[4].value = self.config.get('autoReplayGain');
   uiconf.sections[0].content[5].value = String(self.config.get('autoCrossfadeSeconds'));
   uiconf.sections[0].content[6].value = String(self.config.get('excludeKeywords'));
+  STREAMS.forEach(function (s, i) {
+    uiconf.sections[0].content[7 + i].value = self.config.get(s.key) !== false;
+  });
 
   defer.resolve(uiconf);
   return defer.promise;
@@ -149,6 +165,9 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('autoReplayGain', autoReplayGain);
   self.config.set('autoCrossfadeSeconds', autoCrossfadeSeconds);
   self.config.set('excludeKeywords', excludeKeywords);
+  STREAMS.forEach(function (s) {
+    self.config.set(s.key, !!data[s.key]);
+  });
 
   if (enabled) {
     self.startTimer();
@@ -272,6 +291,18 @@ ControllerAutoDJ.prototype.stopWatcher = function () {
 // volumio-autodj-local.sh in the sibling Celindir69/volumio-autodj repo -
 // rather than being reimplemented here, so it stays exactly as tested
 // against a real Volumio instance.
+// Volumio "service" names of the streaming services switched on in the
+// settings, in priority order - the script's STREAM_SERVICES (empty = local
+// library only).
+ControllerAutoDJ.prototype.streamServices = function () {
+  var self = this;
+  return STREAMS.filter(function (s) {
+    return self.config.get(s.key) !== false;
+  }).map(function (s) {
+    return s.services;
+  }).join(' ');
+};
+
 ControllerAutoDJ.prototype.runTick = function () {
   var self = this;
 
@@ -288,7 +319,8 @@ ControllerAutoDJ.prototype.runTick = function () {
     ARTIST_HISTORY_SIZE: String(self.config.get('artistHistorySize') || 4),
     AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off',
     AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off',
-    EXCLUDE_KEYWORDS: self.config.get('excludeKeywords') || ''
+    EXCLUDE_KEYWORDS: self.config.get('excludeKeywords') || '',
+    STREAM_SERVICES: self.streamServices()
   });
 
   // Backstop on top of the script's own SEARCH_DEADLINE_SECONDS budget

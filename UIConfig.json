@@ -7,7 +7,7 @@
 			"id": "section_autodj",
 			"element": "section",
 			"label": "Continuous Play (AutoDJ)",
-			"description": "Automatically extends the play queue with a track by an artist similar to what's currently playing, once the queue is about to run out. Uses the Last.fm API for similarity data and your local library for matching tracks - nothing is added unless the artist is actually in your library.",
+			"description": "Automatically extends the play queue with a track by an artist similar to what's currently playing, once the queue is about to run out. Uses the Last.fm API for similarity data and your local library for matching tracks; for artists not in your library it can also use TIDAL, Qobuz, HIGHRESAUDIO or Spotify if they are set up in Volumio (switches below).",
 			"icon": "fa-refresh",
 			"onSave": {
 				"type": "controller",
@@ -23,7 +23,11 @@
 					"artistHistorySize",
 					"autoReplayGain",
 					"autoCrossfadeSeconds",
-					"excludeKeywords"
+					"excludeKeywords",
+					"useTidal",
+					"useQobuz",
+					"useHra",
+					"useSpotify"
 				]
 			},
 			"content": [
@@ -80,6 +84,34 @@
 					"label": "Exclude keywords",
 					"doc": "Semicolon-separated words/phrases, e.g. \"Live;Tubular Bells;Ommadawn\" - any candidate track whose title OR album contains one of these, case-insensitively, is skipped entirely. Handy for keeping live recordings or specific long-form albums out of the mix. Plain substring match, not a full filter - a short word can have false positives (\"Live\" also matches an album called \"Olive Grove\"). Leave empty to disable (default).",
 					"value": ""
+				},
+				{
+					"id": "useTidal",
+					"element": "switch",
+					"label": "Use TIDAL",
+					"description": "If an artist similar to the current one is not in your local library, also look for their tracks on TIDAL. Only has an effect if TIDAL is set up as a music source in Volumio. A local match always wins. If several services have the artist, the first one in this list is used.",
+					"value": true
+				},
+				{
+					"id": "useQobuz",
+					"element": "switch",
+					"label": "Use Qobuz",
+					"description": "If an artist similar to the current one is not in your local library, also look for their tracks on Qobuz. Only has an effect if Qobuz is set up as a music source in Volumio. A local match always wins.",
+					"value": true
+				},
+				{
+					"id": "useHra",
+					"element": "switch",
+					"label": "Use HIGHRESAUDIO",
+					"description": "If an artist similar to the current one is not in your local library, also look for their tracks on HIGHRESAUDIO. Only has an effect if HIGHRESAUDIO is set up as a music source in Volumio. A local match always wins.",
+					"value": true
+				},
+				{
+					"id": "useSpotify",
+					"element": "switch",
+					"label": "Use Spotify",
+					"description": "If an artist similar to the current one is not in your local library, also look for their tracks on Spotify. Only has an effect if Spotify is set up as a music source in Volumio. A local match always wins. Needs Volumio's Spotify plugin with search (Spotify Connect alone has none).",
+					"value": true
 				}
 			]
 		}
