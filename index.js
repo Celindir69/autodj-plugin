@@ -14,7 +14,7 @@ module.exports = ControllerAutoDJ;
 var STREAMS = [
   { key: 'useTidal', services: 'tidal' },
   { key: 'useQobuz', services: 'qobuz' },
-  { key: 'useHra', services: 'hra highresaudio' },
+  { key: 'useHra', services: 'hi_res_audio hra highresaudio' },
   { key: 'useSpotify', services: 'spop spotify' }
 ];
 
