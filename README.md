@@ -82,6 +82,23 @@ tested standalone script. See that repository's README for the full
 details of how a seed artist is picked, the repeat guard, and known
 device quirks.
 
+## Switching it from other frontends
+
+Besides its settings page, the plugin offers a small REST endpoint so other
+frontends (for example a web app's repeat button) can show and switch
+"Enabled" without touching any other setting:
+
+```bash
+# status: {"success":true,"data":{"enabled":false,"ready":true}}
+curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","data":{}}' http://<volumio>/api/v1/pluginEndpoint
+# on (off: false)
+curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","data":{"enabled":true}}' http://<volumio>/api/v1/pluginEndpoint
+```
+
+`ready` is `false` while no Last.fm API key is set; switching on is ignored
+then, just like on the settings page. The settings page shows the new state
+the next time it is opened.
+
 ## Install (via SSH)
 
 ```bash
