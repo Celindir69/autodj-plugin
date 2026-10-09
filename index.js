@@ -18,6 +18,13 @@ var STREAMS = [
   { key: 'useSpotify', services: 'spop spotify' }
 ];
 
+var REST_ENDPOINT = {
+  endpoint: 'autodj',
+  type: 'miscellanea',
+  name: 'volumio_autodj',
+  method: 'restApi'
+};
+
 function ControllerAutoDJ(context) {
   var self = this;
 
@@ -76,6 +83,12 @@ ControllerAutoDJ.prototype.onStart = function () {
     self.startTimer();
   }
 
+  // REST endpoint for other frontends (POST /api/v1/pluginEndpoint with
+  // {"endpoint": "autodj", "data": {...}}), see restApi() below.
+  if (typeof self.commandRouter.addPluginRestEndpoint === 'function') {
+    self.commandRouter.addPluginRestEndpoint(REST_ENDPOINT);
+  }
+
   return libQ.resolve();
 };
 
@@ -83,6 +96,9 @@ ControllerAutoDJ.prototype.onStop = function () {
   var self = this;
 
   self.stopTimer();
+  if (typeof self.commandRouter.removePluginRestEndpoint === 'function') {
+    self.commandRouter.removePluginRestEndpoint(REST_ENDPOINT);
+  }
 
   return libQ.resolve();
 };
@@ -179,6 +195,39 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
 
   defer.resolve({});
   return defer.promise;
+};
+
+// Status and on/off for other frontends (e.g. a web app's repeat button),
+// without touching any other setting:
+//   {}                          -> {enabled, ready}
+//   {"enabled": true|false}     -> switch, then the same answer
+// "ready" is false while no Last.fm API key is set (AutoDJ can't be
+// enabled then, same rule as on the settings page).
+ControllerAutoDJ.prototype.status = function () {
+  var self = this;
+  return {
+    enabled: !!self.config.get('enabled'),
+    ready: !!(self.config.get('lastfmApiKey') || '').trim()
+  };
+};
+
+ControllerAutoDJ.prototype.setEnabled = function (enabled) {
+  var self = this;
+  var st = self.status();
+  if (enabled && !st.ready) return st;
+  if (enabled === st.enabled) return st;
+  self.config.set('enabled', enabled);
+  if (enabled) self.startTimer();
+  else self.stopTimer();
+  return self.status();
+};
+
+ControllerAutoDJ.prototype.restApi = function (data) {
+  var self = this;
+  if (data && typeof data.enabled === 'boolean') {
+    return libQ.resolve(self.setEnabled(data.enabled));
+  }
+  return libQ.resolve(self.status());
 };
 
 // -----------------------------------------------------------------------
