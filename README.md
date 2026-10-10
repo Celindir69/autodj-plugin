@@ -111,6 +111,18 @@ Then open **Settings → Plugins → Installed Plugins → AutoDJ - Continuous
 Play** in the Volumio UI, enter your Last.fm API key, adjust the interval/
 repeat-guard size if you like, and switch it on.
 
+After installing or updating, restart Volumio once:
+
+```bash
+sudo systemctl restart volumio
+```
+
+Volumio registers the REST endpoint (see above) only when it starts. Without
+the restart, AutoDJ itself works, but other frontends get
+`{"success":false,"error":"No valid Plugin REST Endpoint: autodj"}`. If the
+settings page still shows an old version after an update, uninstall the
+plugin first, then install it again and restart.
+
 ### Installing on Volumio 2 / OEM devices
 
 On some Volumio 2 OEM builds (confirmed on a Musical Fidelity MX-Stream),
