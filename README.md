@@ -119,9 +119,7 @@ sudo systemctl restart volumio
 
 Volumio registers the REST endpoint (see above) only when it starts. Without
 the restart, AutoDJ itself works, but other frontends get
-`{"success":false,"error":"No valid Plugin REST Endpoint: autodj"}`. If the
-settings page still shows an old version after an update, uninstall the
-plugin first, then install it again and restart.
+`{"success":false,"error":"No valid Plugin REST Endpoint: autodj"}`.
 
 ### Installing on Volumio 2 / OEM devices
 
