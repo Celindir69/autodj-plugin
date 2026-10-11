@@ -39,6 +39,10 @@ Continuous Play**):
   out of the mix. Plain substring match, not a full filter - a short word
   can have false positives (`Live` also matches an album called `Olive
   Grove`).
+- **Maximum track length (minutes)** - 20 by default. Candidate tracks
+  longer than this are never added (DJ mixes, full-album files and similar
+  long recordings); `0` turns the limit off. Tracks whose length is
+  unknown are not affected.
 - **Use TIDAL / Use Qobuz / Use HIGHRESAUDIO / Use Spotify** - all on by
   default. For an artist that isn't in your local library, also look for
   their tracks on that service; each only has an effect if the service is

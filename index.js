@@ -69,6 +69,7 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   if (self.config.get('autoReplayGain') === undefined) self.config.set('autoReplayGain', false);
   if (self.config.get('autoCrossfadeSeconds') === undefined) self.config.set('autoCrossfadeSeconds', '');
   if (self.config.get('excludeKeywords') === undefined) self.config.set('excludeKeywords', '');
+  if (self.config.get('maxTrackMinutes') === undefined) self.config.set('maxTrackMinutes', 20);
   STREAMS.forEach(function (s) {
     if (self.config.get(s.key) === undefined) self.config.set(s.key, true);
   });
@@ -123,12 +124,20 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   uiconf.sections[0].content[4].value = self.config.get('autoReplayGain');
   uiconf.sections[0].content[5].value = String(self.config.get('autoCrossfadeSeconds'));
   uiconf.sections[0].content[6].value = String(self.config.get('excludeKeywords'));
+  uiconf.sections[0].content[7].value = String(self.config.get('maxTrackMinutes'));
   STREAMS.forEach(function (s, i) {
-    uiconf.sections[0].content[7 + i].value = self.config.get(s.key) !== false;
+    uiconf.sections[0].content[8 + i].value = self.config.get(s.key) !== false;
   });
 
   defer.resolve(uiconf);
   return defer.promise;
+};
+
+// Stored setting as a whole number of minutes, 0 = no limit; anything
+// unreadable falls back to the script's default of 20.
+ControllerAutoDJ.prototype.maxTrackMinutes = function () {
+  var n = parseInt(this.config.get('maxTrackMinutes'), 10);
+  return isNaN(n) || n < 0 ? 20 : n;
 };
 
 ControllerAutoDJ.prototype.saveSettings = function (data) {
@@ -164,6 +173,15 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
     autoCrossfadeSeconds = String(crossfadeNum);
   }
 
+  // 0 = no limit; empty falls back to the default of 20
+  var maxTrackMinutesRaw = String(data['maxTrackMinutes'] === undefined ? '' : data['maxTrackMinutes']).trim();
+  var maxTrackMinutes = maxTrackMinutesRaw === '' ? 20 : parseInt(maxTrackMinutesRaw, 10);
+  if (isNaN(maxTrackMinutes) || maxTrackMinutes < 0 || (maxTrackMinutesRaw !== '' && String(maxTrackMinutes) !== maxTrackMinutesRaw)) {
+    self.commandRouter.pushToastMessage('error', 'AutoDJ', 'Maximum track length must be a whole number of minutes (0 = no limit).');
+    defer.resolve({});
+    return defer.promise;
+  }
+
   var enabled = !!data['enabled'];
   var lastfmApiKey = (data['lastfmApiKey'] || '').trim();
   var autoReplayGain = !!data['autoReplayGain'];
@@ -181,6 +199,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   self.config.set('autoReplayGain', autoReplayGain);
   self.config.set('autoCrossfadeSeconds', autoCrossfadeSeconds);
   self.config.set('excludeKeywords', excludeKeywords);
+  self.config.set('maxTrackMinutes', maxTrackMinutes);
   STREAMS.forEach(function (s) {
     self.config.set(s.key, !!data[s.key]);
   });
@@ -369,6 +388,7 @@ ControllerAutoDJ.prototype.runTick = function () {
     AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off',
     AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off',
     EXCLUDE_KEYWORDS: self.config.get('excludeKeywords') || '',
+    MAX_TRACK_MINUTES: String(self.maxTrackMinutes()),
     STREAM_SERVICES: self.streamServices()
   });
 

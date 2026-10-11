@@ -24,6 +24,7 @@
 					"autoReplayGain",
 					"autoCrossfadeSeconds",
 					"excludeKeywords",
+					"maxTrackMinutes",
 					"useTidal",
 					"useQobuz",
 					"useHra",
@@ -84,6 +85,14 @@
 					"label": "Exclude keywords",
 					"doc": "Semicolon-separated words/phrases, e.g. \"Live;Tubular Bells;Ommadawn\" - any candidate track whose title OR album contains one of these, case-insensitively, is skipped entirely. Handy for keeping live recordings or specific long-form albums out of the mix. Plain substring match, not a full filter - a short word can have false positives (\"Live\" also matches an album called \"Olive Grove\"). Leave empty to disable (default).",
 					"value": ""
+				},
+				{
+					"id": "maxTrackMinutes",
+					"element": "input",
+					"type": "text",
+					"label": "Maximum track length (minutes)",
+					"doc": "Candidate tracks longer than this are never added - keeps DJ mixes, full-album files and similar long recordings out of the mix. Default 20. 0 = no limit. Tracks with an unknown length are not affected.",
+					"value": "20"
 				},
 				{
 					"id": "useTidal",
