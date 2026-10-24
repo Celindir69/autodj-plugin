@@ -136,10 +136,13 @@ what's actually happening and a working install script
 
 ## Logs
 
-Plugin logs appear in Volumio's own plugin log (`journalctl -u volumio -f`
-while it's running, or via the Volumio UI's log viewer) - each run's
-output is prefixed `[volumio_autodj]` - in addition to the bundled
-script's own debug log at `/data/volumio_autodj_data/autodj.debug.log`.
+Every step of every run goes to the bundled script's own debug log at
+`/data/volumio_autodj_data/autodj.debug.log`. Volumio's own plugin log
+(`journalctl -u volumio -f`, or the Volumio UI's log viewer) only gets
+something when a run fails: the error and the run's last lines, prefixed
+`[volumio_autodj]`. The background watcher runs as the systemd service
+`volumio-autodj-watch` (set up by `install.sh`, started and stopped by the
+plugin); its output is in `journalctl -u volumio-autodj-watch`.
 
 ## License
 
