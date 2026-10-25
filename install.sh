@@ -50,6 +50,8 @@ EnvironmentFile=-/tmp/volumio_autodj/watch.env
 ExecStart=/bin/bash $SCRIPTPATH/volumio-autodj-local.sh --watch-boundary
 Restart=always
 RestartSec=10
+ProtectSystem=full
+NoNewPrivileges=true
 UNITFILE
   systemctl daemon-reload || fail "systemctl daemon-reload"
 fi
