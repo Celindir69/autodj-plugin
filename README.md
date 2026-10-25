@@ -144,6 +144,11 @@ something when a run fails: the error and the run's last lines, prefixed
 `volumio-autodj-watch` (set up by `install.sh`, started and stopped by the
 plugin); its output is in `journalctl -u volumio-autodj-watch`.
 
+Uninstalling removes the service, the debug log and the runtime state.
+Only the repeat guard (`artist_history.txt`, `track_history.txt` in
+`/data/volumio_autodj_data`) stays for a reinstall; delete that folder by
+hand to remove everything.
+
 ## License
 
 Do whatever you want with it.
