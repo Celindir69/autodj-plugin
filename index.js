@@ -243,7 +243,10 @@ ControllerAutoDJ.prototype.status = function () {
   var self = this;
   return {
     enabled: !!self.config.get('enabled'),
-    ready: !!(self.config.get('lastfmApiKey') || '').trim()
+    ready: !!(self.config.get('lastfmApiKey') || '').trim(),
+    // read only, so a frontend can show what AutoDJ changes on its own
+    replayGain: !!self.config.get('autoReplayGain'),
+    crossfade: parseInt(self.config.get('autoCrossfadeSeconds'), 10) || 0
   };
 };
 
