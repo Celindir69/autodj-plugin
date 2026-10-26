@@ -93,7 +93,7 @@ frontends (for example a web app's repeat button) can show and switch
 "Enabled" without touching any other setting:
 
 ```bash
-# status: {"success":true,"data":{"enabled":false,"ready":true}}
+# status: {"success":true,"data":{"enabled":false,"ready":true,"replayGain":false,"crossfade":0}}
 curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","data":{}}' http://<volumio>/api/v1/pluginEndpoint
 # on (off: false)
 curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","data":{"enabled":true}}' http://<volumio>/api/v1/pluginEndpoint
@@ -101,7 +101,9 @@ curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","da
 
 `ready` is `false` while no Last.fm API key is set; switching on is ignored
 then, just like on the settings page. The settings page shows the new state
-the next time it is opened.
+the next time it is opened. `replayGain` and `crossfade` (seconds, 0 = off)
+only report the automatic volume levelling and crossfade from the settings
+page; the endpoint does not change them.
 
 ## Install (via SSH)
 
