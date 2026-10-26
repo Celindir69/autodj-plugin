@@ -4,7 +4,6 @@ var libQ = require('kew');
 var fs = require('fs-extra');
 var path = require('path');
 var execFile = require('child_process').execFile;
-var spawn = require('child_process').spawn;
 
 module.exports = ControllerAutoDJ;
 
@@ -17,6 +16,14 @@ var STREAMS = [
   { key: 'useHra', services: 'hi_res_audio hra highresaudio' },
   { key: 'useSpotify', services: 'spop spotify' }
 ];
+
+// The boundary watcher (see startWatcher) runs as a systemd service of its
+// own, as Volumio asks of plugins for anything long-running: install.sh
+// writes the unit, the plugin only starts and stops it. Its settings go in
+// an EnvironmentFile below /tmp, rewritten on every start.
+var WATCH_UNIT = 'volumio-autodj-watch.service';
+var WATCH_ENV_DIR = '/tmp/volumio_autodj';
+var WATCH_ENV = WATCH_ENV_DIR + '/watch.env';
 
 var REST_ENDPOINT = {
   endpoint: 'autodj',
@@ -34,8 +41,7 @@ function ControllerAutoDJ(context) {
   self.configManager = self.context.configManager;
 
   self.timer = null;
-  self.watchProcess = null;
-  self.watcherIntentionallyStopped = true;
+  self.watcherRunning = false;
 }
 
 // -----------------------------------------------------------------------
@@ -55,7 +61,11 @@ ControllerAutoDJ.prototype.onVolumioStart = function () {
   // but nothing ever reached disk, so a reboot reverted everything to
   // defaults. Ensuring the directory exists up front avoids this
   // regardless of whether v-conf itself gets fixed upstream.
-  fs.ensureDirSync(path.dirname(configFile));
+  try {
+    fs.ensureDirSync(path.dirname(configFile));
+  } catch (e) {
+    self.logger.error('[volumio_autodj] cannot create ' + path.dirname(configFile) + ': ' + e.message);
+  }
 
   self.config = new (require('v-conf'))();
   self.config.loadFile(configFile);
@@ -115,7 +125,14 @@ ControllerAutoDJ.prototype.getUIConfig = function () {
   var self = this;
   var defer = libQ.defer();
 
-  var uiconf = fs.readJsonSync(__dirname + '/UIConfig.json');
+  var uiconf;
+  try {
+    uiconf = fs.readJsonSync(__dirname + '/UIConfig.json');
+  } catch (e) {
+    self.logger.error('[volumio_autodj] cannot read UIConfig.json: ' + e.message);
+    defer.reject(e);
+    return defer.promise;
+  }
 
   uiconf.sections[0].content[0].value = self.config.get('enabled');
   uiconf.sections[0].content[1].value = String(self.config.get('intervalSeconds'));
@@ -278,77 +295,58 @@ ControllerAutoDJ.prototype.stopTimer = function () {
 };
 
 // Runs the bundled script's lightweight "--watch-boundary" mode as a
-// persistent background process, separate from the main runTick() interval
+// persistent background process (the systemd service volumio-autodj-watch,
+// see WATCH_UNIT), separate from the main runTick() interval
 // above. Reacting to playback actually reaching an AutoDJ-mixed track
 // promptly (to avoid switching replay gain/crossfade on mid-song, well
 // after the track started) needs a much shorter poll interval than the
 // queue-refill logic needs or should run at - see "Avoiding a mid-song
-// volume jump" in the volumio-autodj README. Only spawned when there's
+// volume jump" in the volumio-autodj README. Only started when there's
 // actually something for it to do.
 ControllerAutoDJ.prototype.startWatcher = function () {
   var self = this;
 
   if (!self.config.get('autoReplayGain') && !self.config.get('autoCrossfadeSeconds')) {
+    self.stopWatcher();
     return;
   }
 
-  self.stopWatcher();
+  var env = [
+    'VOLUMIO_HOST=localhost',
+    'AUTO_REPLAYGAIN=' + (self.config.get('autoReplayGain') ? 'on' : 'off'),
+    'AUTO_CROSSFADE=' + (self.config.get('autoCrossfadeSeconds') || 'off')
+  ].join('\n') + '\n';
+  try {
+    fs.ensureDirSync(WATCH_ENV_DIR);
+    fs.writeFileSync(WATCH_ENV, env);
+  } catch (e) {
+    self.logger.error('[volumio_autodj] cannot write ' + WATCH_ENV + ': ' + e.message);
+    return;
+  }
 
-  var scriptPath = __dirname + '/volumio-autodj-local.sh';
-  var env = Object.assign({}, process.env, {
-    VOLUMIO_HOST: 'localhost',
-    AUTO_REPLAYGAIN: self.config.get('autoReplayGain') ? 'on' : 'off',
-    AUTO_CROSSFADE: self.config.get('autoCrossfadeSeconds') || 'off'
-  });
-
-  self.watcherIntentionallyStopped = false;
-  // Captured in a closure and compared by identity in the "exit" handler
-  // below, rather than trusting self.watchProcess at the time exit fires:
-  // stopWatcher()/startWatcher() clear/replace that reference SYNCHRONOUSLY,
-  // but a killed process's own "exit" event only arrives later, ASYNCHRONOUSLY
-  // - so a belated exit from an OLDER generation (e.g. this same function
-  // called again in quick succession, such as from saveSettings()) would
-  // otherwise null out the reference to a NEWER, still-running process, or
-  // schedule a bogus "unexpected exit" restart for a process we killed on
-  // purpose (confirmed by an isolated test: calling startWatcher() twice in
-  // a row orphaned the second, still-running process this way).
-  var child = spawn('/bin/bash', [scriptPath, '--watch-boundary'], { env: env });
-  self.watchProcess = child;
-
-  child.on('error', function (error) {
-    self.logger.error('[volumio_autodj] boundary watcher failed to start: ' + error.message);
-  });
-
-  child.stderr.on('data', function (data) {
-    String(data).trim().split('\n').forEach(function (line) {
-      if (line) self.logger.info('[volumio_autodj] ' + line);
-    });
-  });
-
-  child.on('exit', function (code, signal) {
-    if (self.watchProcess !== child) return;
-    self.watchProcess = null;
-    if (self.watcherIntentionallyStopped) return;
-    // Unexpected exit (crash, killed by something else) rather than our
-    // own stopWatcher() - restart it after a short delay rather than
-    // leaving replay gain/crossfade timing broken silently until the next
-    // plugin restart. The delay avoids hammering a device that's actually
-    // in trouble (e.g. MPD itself down) with a tight respawn loop.
-    self.logger.warn('[volumio_autodj] boundary watcher exited unexpectedly (code=' + code + ', signal=' + signal + ') - restarting in 10s');
-    setTimeout(function () {
-      if (!self.watcherIntentionallyStopped) self.startWatcher();
-    }, 10000);
+  // restart, not start: picks up changed settings when it is already running
+  self.systemctl('restart', function (error) {
+    if (error) {
+      self.logger.error('[volumio_autodj] boundary watcher did not start: ' + error.message);
+    } else {
+      self.watcherRunning = true;
+    }
   });
 };
 
 ControllerAutoDJ.prototype.stopWatcher = function () {
   var self = this;
 
-  self.watcherIntentionallyStopped = true;
-  if (self.watchProcess) {
-    self.watchProcess.kill();
-    self.watchProcess = null;
-  }
+  self.watcherRunning = false;
+  self.systemctl('stop', function () {});
+};
+
+// As in Volumio's own examples: systemctl via sudo (-n: never wait for a
+// password prompt).
+ControllerAutoDJ.prototype.systemctl = function (action, cb) {
+  execFile('/usr/bin/sudo', ['-n', '/bin/systemctl', action, WATCH_UNIT], { timeout: 15000 }, function (error) {
+    cb(error || null);
+  });
 };
 
 // Runs the bundled volumio-autodj-local.sh once, with settings from this
@@ -398,16 +396,16 @@ ControllerAutoDJ.prototype.runTick = function () {
   // addToQueue, history writes, replay gain/crossfade sync), which should
   // normally finish within a few seconds on top of that budget.
   execFile('/bin/bash', [scriptPath], { env: env, timeout: 60000 }, function (error, stdout, stderr) {
-    if (stderr) {
-      // The script logs its own timestamped lines to stderr (as well as
-      // its own debug log file under /data/volumio_autodj_data/) - surface
-      // them in Volumio's own plugin log too.
-      String(stderr).trim().split('\n').forEach(function (line) {
-        if (line) self.logger.info('[volumio_autodj] ' + line);
-      });
-    }
+    // The script logs every step to its own debug log file
+    // (/data/volumio_autodj_data/autodj.debug.log) and to stderr. Volumio's
+    // own log only gets something when a run fails - then its last lines,
+    // so the cause is visible there too - not the routine output of a run
+    // every 90 seconds.
     if (error) {
       self.logger.error('[volumio_autodj] run failed: ' + error.message);
+      String(stderr || '').trim().split('\n').slice(-10).forEach(function (line) {
+        if (line) self.logger.error('[volumio_autodj] ' + line);
+      });
     }
   });
 };
