@@ -153,4 +153,4 @@ hand to remove everything.
 
 ## License
 
-Do whatever you want with it.
+MIT, see [LICENSE](LICENSE).
