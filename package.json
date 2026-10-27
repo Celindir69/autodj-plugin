@@ -1,7 +1,7 @@
 {
 	"name": "volumio_autodj",
 	"version": "1.2.0",
-	"description": "Continuous play: automatically extends Volumio's play queue with similar tracks from your local library once it's about to run out.",
+	"description": "Continuous play: automatically extends Volumio's play queue with similar tracks once it's about to run out: from your local library first, from TIDAL, Qobuz, HIGHRESAUDIO or Spotify if set up.",
 	"main": "index.js",
 	"scripts": {},
 	"author": "Celindir69",
@@ -11,7 +11,7 @@
 		"icon": "fa-refresh",
 		"plugin_type": "miscellanea",
 		"boot_priority": 10,
-		"details": "Watches the play queue and, once it's about to run out, appends a track by an artist similar to what's currently playing (via the Last.fm API), matched against your local library.",
+		"details": "Watches the play queue and, once it's about to run out, appends a track by an artist similar to what's currently playing (via the Last.fm API), matched against your local library first and, for artists not found there, against the streaming services set up in Volumio.",
 		"architectures": [
 			"amd64",
 			"armhf"
