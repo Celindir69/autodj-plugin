@@ -1,6 +1,6 @@
 {
 	"name": "volumio_autodj",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "Continuous play: automatically extends Volumio's play queue with similar tracks once it's about to run out: from your local library first, from TIDAL, Qobuz, HIGHRESAUDIO or Spotify if set up.",
 	"main": "index.js",
 	"scripts": {},
@@ -11,7 +11,7 @@
 		"icon": "fa-refresh",
 		"plugin_type": "miscellanea",
 		"boot_priority": 10,
-		"details": "Watches the play queue and, once it's about to run out, appends a track by an artist similar to what's currently playing (via the Last.fm API), matched against your local library first and, for artists not found there, against the streaming services set up in Volumio.",
+		"details": "Watches the play queue and, once it's about to run out, appends a track by an artist similar to what's currently playing (via Deezer, or the Last.fm API with a key), matched against your local library first and, for artists not found there, against the streaming services set up in Volumio.",
 		"architectures": [
 			"amd64",
 			"armhf"
@@ -19,7 +19,7 @@
 		"os": [
 			"bookworm"
 		],
-		"changelog": "1.2.0: boundary watcher as a systemd service, only errors in Volumio's log, cleanup after a failed installation."
+		"changelog": "1.3.0: Last.fm key optional, similar artists from Deezer without it (Last.fm keys need Last.fm Pro from December 2026). 1.2.0: boundary watcher as a systemd service, only errors in Volumio's log, cleanup after a failed installation."
 	},
 	"engines": {
 		"node": ">=20",

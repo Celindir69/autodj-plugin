@@ -204,10 +204,7 @@ ControllerAutoDJ.prototype.saveSettings = function (data) {
   var autoReplayGain = !!data['autoReplayGain'];
   var excludeKeywords = (data['excludeKeywords'] || '').trim();
 
-  if (enabled && !lastfmApiKey) {
-    self.commandRouter.pushToastMessage('error', 'AutoDJ', 'A Last.fm API key is required to enable AutoDJ.');
-    enabled = false;
-  }
+  /* the Last.fm key is optional: without one (or when Last.fm rejects it) the script asks Deezer */
 
   self.config.set('enabled', enabled);
   self.config.set('intervalSeconds', intervalSeconds);
@@ -243,7 +240,7 @@ ControllerAutoDJ.prototype.status = function () {
   var self = this;
   return {
     enabled: !!self.config.get('enabled'),
-    ready: !!(self.config.get('lastfmApiKey') || '').trim(),
+    ready: true,   // the Last.fm key is optional since 1.3.0 (Deezer without it)
     // read only, so a frontend can show what AutoDJ changes on its own
     replayGain: !!self.config.get('autoReplayGain'),
     crossfade: parseInt(self.config.get('autoCrossfadeSeconds'), 10) || 0
@@ -375,11 +372,7 @@ ControllerAutoDJ.prototype.streamServices = function () {
 ControllerAutoDJ.prototype.runTick = function () {
   var self = this;
 
-  var lastfmApiKey = self.config.get('lastfmApiKey');
-  if (!lastfmApiKey) {
-    self.logger.warn('[volumio_autodj] No Last.fm API key configured - skipping run');
-    return;
-  }
+  var lastfmApiKey = self.config.get('lastfmApiKey') || '';
 
   var scriptPath = __dirname + '/volumio-autodj-local.sh';
   var env = Object.assign({}, process.env, {

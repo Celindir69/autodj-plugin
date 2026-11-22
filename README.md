@@ -2,8 +2,9 @@
 
 A [Volumio](https://volumio.org/) plugin that keeps the play queue topped
 up automatically: once the queue is about to run out, it appends a track
-by an artist similar to what's currently playing (via the
-[Last.fm](https://www.last.fm/api/account/create) API), matched against
+by an artist similar to what's currently playing (via Deezer's free
+"related artists", or the [Last.fm](https://www.last.fm/api/account/create)
+API if you enter a key), matched against
 your local library (and, if the artist isn't found locally, against
 TIDAL, Qobuz, HIGHRESAUDIO or Spotify too, whichever you have set up as a
 Volumio source - see "Streaming fallback" in the volumio-autodj README) -
@@ -17,7 +18,9 @@ Settings page (**Settings → Plugins → Installed Plugins → AutoDJ -
 Continuous Play**):
 - **Enabled** - on/off switch.
 - **Check interval (seconds)** - how often to check the queue.
-- **Last.fm API key** - free, from https://www.last.fm/api/account/create.
+- **Last.fm API key** - optional. Since 1 December 2026 a Last.fm API key
+  only works with a paid Last.fm Pro subscription. Without a key, or when
+  Last.fm rejects it, similar artists come from Deezer (no key needed).
 - **Artist repeat guard size** - how many recently-used artists to
   remember and avoid repeating right away (the exact same track is
   separately guarded for longer - see the volumio-autodj README).
@@ -99,8 +102,7 @@ curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","da
 curl -s -X POST -H 'Content-Type: application/json' -d '{"endpoint":"autodj","data":{"enabled":true}}' http://<volumio>/api/v1/pluginEndpoint
 ```
 
-`ready` is `false` while no Last.fm API key is set; switching on is ignored
-then, just like on the settings page. The settings page shows the new state
+`ready` is always `true` since 1.3.0 (the Last.fm key is optional). The settings page shows the new state
 the next time it is opened. `replayGain` and `crossfade` (seconds, 0 = off)
 only report the automatic volume levelling and crossfade from the settings
 page; the endpoint does not change them.
@@ -114,7 +116,7 @@ cd /home/volumio/autodj-plugin
 volumio plugin install
 ```
 Then open **Settings → Plugins → Installed Plugins → AutoDJ - Continuous
-Play** in the Volumio UI, enter your Last.fm API key, adjust the interval/
+Play** in the Volumio UI, optionally enter a Last.fm API key, adjust the interval/
 repeat-guard size if you like, and switch it on.
 
 After installing or updating, restart Volumio once:
