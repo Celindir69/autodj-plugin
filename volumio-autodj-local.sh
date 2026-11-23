@@ -73,13 +73,13 @@ MPD_PORT="${MPD_PORT:-6600}"
 WATCH_BOUNDARY_ONLY=0
 [[ "${1:-}" == "--watch-boundary" ]] && WATCH_BOUNDARY_ONLY=1
 
-# Not needed in watch mode - only the main queue-refill logic below ever
-# talks to Last.fm.
-if (( WATCH_BOUNDARY_ONLY )); then
-  LASTFM_API_KEY="${LASTFM_API_KEY:-}"
-else
-  LASTFM_API_KEY="${LASTFM_API_KEY:?Set LASTFM_API_KEY to a free Last.fm API key (https://www.last.fm/api/account/create)}"
-fi
+# Optional since Last.fm keys need a paid Last.fm Pro subscription (from
+# December 2026): without a key, or when Last.fm rejects it, similar artists
+# come from Deezer's free "related artists" (no key needed) - see
+# similar_names() below.
+LASTFM_API_KEY="${LASTFM_API_KEY:-}"
+DEEZER_API="${DEEZER_API:-https://api.deezer.com}"
+LASTFM_API="${LASTFM_API:-https://ws.audioscrobbler.com/2.0/}"
 
 # How many tracks may still be left AFTER the currently playing one before
 # a refill is triggered (0 = only refill once the queue is truly empty
@@ -356,6 +356,44 @@ jq_safe() {
     printf '%s\n' "$json" >> "$DEBUG_LOG"
     printf '%s' "$default"
   fi
+}
+
+# ---------------------------------------------------------------------------
+# Similar artists, most similar first, one name per line on stdout (logs go
+# to stderr). Last.fm when a key is set and Last.fm answers with a list;
+# otherwise (no key, key rejected - e.g. no Last.fm Pro -, Last.fm down)
+# Deezer: the artist with exactly that name (ignoring case and a leading
+# "The", most fans first), then its related artists. Returns 1 if neither
+# source answered at all.
+# ---------------------------------------------------------------------------
+similar_names() {
+  local artist="$1" json names err want id
+  if [[ -n "$LASTFM_API_KEY" ]]; then
+    # no "-f": Last.fm sends its error message (e.g. "Invalid API key") with an HTTP error status
+    json="$(timeout 12 curl -s --max-time 10 "${LASTFM_API}?method=artist.getsimilar&artist=$(urlencode "$artist")&api_key=${LASTFM_API_KEY}&format=json&limit=${CANDIDATE_LIMIT}")" || json=""
+    err="$(jq_safe '.message // empty' 'no JSON answer' "$json")"
+    if [[ -n "$json" && -z "$err" ]]; then
+      names="$(printf '%s' "$json" | jq -r '.similarartists.artist[]?.name // empty' 2>/dev/null)" || names=""
+      if [[ -n "$names" ]]; then printf '%s\n' "$names"; return 0; fi
+      log "Last.fm knows no similar artists for '$artist' - asking Deezer"
+    else
+      log "Last.fm: ${err:-no answer} - asking Deezer instead"
+    fi
+  fi
+  json="$(timeout 12 curl -sf --max-time 10 "${DEEZER_API}/search/artist?limit=10&q=$(urlencode "$artist")")" || { log "Deezer request failed"; return 1; }
+  # matched in bash, not jq: jq 1.4 (older Volumio images) has no ascii_downcase/sub
+  want="$(printf '%s' "$artist" | tr '[:upper:]' '[:lower:]' | sed 's/^the //')"
+  local best=-1 a_id a_fans a_name
+  id=""
+  while IFS=$'\t' read -r a_id a_fans a_name; do
+    [[ -z "$a_id" ]] && continue
+    [[ "$(printf '%s' "$a_name" | tr '[:upper:]' '[:lower:]' | sed 's/^the //')" == "$want" ]] || continue
+    [[ "$a_fans" =~ ^[0-9]+$ ]] || a_fans=0
+    if (( a_fans > best )); then best=$a_fans; id=$a_id; fi
+  done < <(printf '%s' "$json" | jq -r '.data[]? | "\(.id)\t\(.nb_fan // 0)\t\(.name)"' 2>/dev/null)
+  [[ -z "$id" ]] && return 0
+  json="$(timeout 12 curl -sf --max-time 10 "${DEEZER_API}/artist/${id}/related?limit=${CANDIDATE_LIMIT}")" || { log "Deezer request failed"; return 1; }
+  printf '%s' "$json" | jq -r '.data[]?.name // empty' 2>/dev/null || true
 }
 
 # ---------------------------------------------------------------------------
@@ -790,22 +828,16 @@ norm_seed="$(normalize "$seed_artist")"
 history_add "$ARTIST_HISTORY_FILE" "$ARTIST_HISTORY_SIZE" "$norm_seed"
 
 # ---------------------------------------------------------------------------
-# 3. Ask Last.fm for similar artists (most similar first).
+# 3. Ask Last.fm (or Deezer, see similar_names) for similar artists (most
+#    similar first).
 # ---------------------------------------------------------------------------
-lastfm_url="https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=$(urlencode "$seed_artist")&api_key=${LASTFM_API_KEY}&format=json&limit=${CANDIDATE_LIMIT}"
 _t0=$SECONDS
-lastfm_json="$(timeout 12 curl -sf --max-time 10 "$lastfm_url")" || {
-  log "Last.fm request failed"
+similar_list="$(similar_names "$seed_artist")" || {
+  log "Similar artists request failed"
   exit 1
 }
 _elapsed=$(( SECONDS - _t0 ))
-(( _elapsed >= 1 )) && log "Last.fm getsimilar for '$seed_artist' took ${_elapsed}s"
-
-lastfm_error="$(jq_safe '.message // empty' '' "$lastfm_json")"
-if [[ -n "$lastfm_error" ]]; then
-  log "Last.fm returned an error: $lastfm_error"
-  exit 1
-fi
+(( _elapsed >= 1 )) && log "Similar artists for '$seed_artist' took ${_elapsed}s"
 
 # "mapfile"/"readarray" and "declare -A" both need bash 4.0+, which isn't a
 # safe assumption on Volumio's own bash across every device/image this
@@ -815,10 +847,10 @@ candidates=()
 while IFS= read -r line; do
   [[ -z "$line" ]] && continue
   candidates+=("$line")
-done < <(printf '%s' "$lastfm_json" | jq -r '.similarartists.artist[]?.name // empty')
+done < <(printf '%s\n' "$similar_list")
 
 if (( ${#candidates[@]} == 0 )); then
-  log "Last.fm returned no similar artists for '$seed_artist'"
+  log "No similar artists found for '$seed_artist'"
   exit 0
 fi
 
@@ -1126,29 +1158,22 @@ fi
 try_alternate_seed() {
   local seed="$1" url json err line cand norm_cand real_match _t0 _elapsed
 
-  url="https://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=$(urlencode "$seed")&api_key=${LASTFM_API_KEY}&format=json&limit=${CANDIDATE_LIMIT}"
   _t0=$SECONDS
-  json="$(timeout 12 curl -sf --max-time 10 "$url")" || {
-    log "Retry: Last.fm request failed for alternate seed '$seed'"
+  json="$(similar_names "$seed")" || {
+    log "Retry: similar artists request failed for alternate seed '$seed'"
     return 1
   }
   _elapsed=$(( SECONDS - _t0 ))
-  (( _elapsed >= 1 )) && log "Retry: Last.fm getsimilar for alternate seed '$seed' took ${_elapsed}s"
-
-  err="$(jq_safe '.message // empty' '' "$json")"
-  if [[ -n "$err" ]]; then
-    log "Retry: Last.fm returned an error for alternate seed '$seed': $err"
-    return 1
-  fi
+  (( _elapsed >= 1 )) && log "Retry: similar artists for alternate seed '$seed' took ${_elapsed}s"
 
   candidates=()
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
     candidates+=("$line")
-  done < <(printf '%s' "$json" | jq -r '.similarartists.artist[]?.name // empty')
+  done < <(printf '%s\n' "$json")
 
   if (( ${#candidates[@]} == 0 )); then
-    log "Retry: Last.fm returned no similar artists for alternate seed '$seed'"
+    log "Retry: no similar artists for alternate seed '$seed'"
     return 1
   fi
 

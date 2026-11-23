@@ -7,7 +7,7 @@
 			"id": "section_autodj",
 			"element": "section",
 			"label": "Continuous Play (AutoDJ)",
-			"description": "Automatically extends the play queue with a track by an artist similar to what's currently playing, once the queue is about to run out. Uses the Last.fm API for similarity data and your local library for matching tracks; for artists not in your library it can also use TIDAL, Qobuz, HIGHRESAUDIO or Spotify if they are set up in Volumio (switches below).",
+			"description": "Automatically extends the play queue with a track by an artist similar to what's currently playing, once the queue is about to run out. Uses Last.fm (if you enter a key) or otherwise Deezer for similarity data and your local library for matching tracks; for artists not in your library it can also use TIDAL, Qobuz, HIGHRESAUDIO or Spotify if they are set up in Volumio (switches below).",
 			"icon": "fa-refresh",
 			"onSave": {
 				"type": "controller",
@@ -36,7 +36,7 @@
 					"id": "enabled",
 					"element": "switch",
 					"label": "Enabled",
-					"description": "Turn continuous play on or off. Requires a Last.fm API key below.",
+					"description": "Turn continuous play on or off.",
 					"value": false
 				},
 				{
@@ -51,8 +51,8 @@
 					"id": "lastfmApiKey",
 					"element": "input",
 					"type": "password",
-					"label": "Last.fm API key",
-					"doc": "Free API key from https://www.last.fm/api/account/create - used to find artists similar to what's currently playing.",
+					"label": "Last.fm API key (optional)",
+					"doc": "Optional. Since December 2026 a Last.fm API key needs a paid Last.fm Pro subscription. Without a key (or if Last.fm rejects it) similar artists come from Deezer, which needs no key.",
 					"value": ""
 				},
 				{
