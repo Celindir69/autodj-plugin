@@ -1,6 +1,6 @@
 {
 	"name": "volumio_autodj",
-	"version": "1.3.0",
+	"version": "1.4.0",
 	"description": "Continuous play: automatically extends Volumio's play queue with similar tracks once it's about to run out: from your local library first, from TIDAL, Qobuz, HIGHRESAUDIO or Spotify if set up.",
 	"main": "index.js",
 	"scripts": {},
