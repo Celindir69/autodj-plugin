@@ -42,6 +42,14 @@ Continuous Play**):
   out of the mix. Plain substring match, not a full filter - a short word
   can have false positives (`Live` also matches an album called `Olive
   Grove`).
+- **NoMix / "don't like"** (no setting, automatic) - if
+  [Xplorio](https://github.com/Celindir69/volumio-web-app)'s tag service
+  runs on the same device, tracks with `NoMix` anywhere in their comment
+  tag and tracks rated "don't like" are never picked, just as in Xplorio's
+  own mixes. MPD does not pass the comment tag on, so the script asks the
+  tag service for the list (`http://127.0.0.1:8766/autodj/excluded`,
+  environment variable `XPLORIO_EXCLUDED_URL`, empty turns it off). Without
+  the tag service nothing changes.
 - **Maximum track length (minutes)** - 20 by default. Candidate tracks
   longer than this are never added (DJ mixes, full-album files and similar
   long recordings); `0` turns the limit off. Tracks whose length is
