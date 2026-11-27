@@ -19,7 +19,7 @@
 		"os": [
 			"bookworm"
 		],
-		"changelog": "1.3.0: Last.fm key optional, similar artists from Deezer without it (Last.fm keys need Last.fm Pro from December 2026). 1.2.0: boundary watcher as a systemd service, only errors in Volumio's log, cleanup after a failed installation."
+		"changelog": "1.4.0: never picks tracks tagged NoMix or \"don't like\" in the Xplorio tag service. 1.3.0: Last.fm key optional, similar artists from Deezer without it (Last.fm keys need Last.fm Pro from December 2026). 1.2.0: boundary watcher as a systemd service, only errors in Volumio's log, cleanup after a failed installation."
 	},
 	"engines": {
 		"node": ">=20",
